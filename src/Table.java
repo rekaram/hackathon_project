@@ -1,28 +1,18 @@
 package hackathon_project;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.StringTokenizer;
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 
-public class ReadFile {
-	static BufferedReader br = null;
-	static int count = 1;
-	static JSONObject jsonObject1 = new JSONObject();
-	static JSONObject jsonObject2 = new JSONObject();
-	static JSONObject jsonObject3 = new JSONObject();
-	static JSONObject jsonObject4 = new JSONObject();
-	
-	
-	static JSONArray array = new JSONArray();
-	public static Connection getConnection() throws SQLException {
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+@Path("/display/")
+public class Table {
+public static Connection getConnection() throws SQLException {
 		
 		Connection con=null;
 		try {
@@ -35,86 +25,26 @@ public class ReadFile {
 		}
 		return con;
 	}
+
+public static String getDetails() throws SQLException {
+	PreparedStatement preparedStatement3=getConnection().prepareStatement("SELECT max(CPU_Value),avg(CPU_Value) FROM CPU");
+	ResultSet result2=preparedStatement3.executeQuery();
+	String max="";
+	String avg="";
+	while(result2.next()) {
+		max=result2.getString(1);
+		avg=result2.getString(2);
+	}
+	String s="<table style=\"border: 1px solid black\"><tr><th style=\"border: 1px solid black\">Transaction Name</th><th style=\"border: 1px solid black\">Max</th><th style=\"border: 1px solid black\">Avg</th></tr><tr><td style=\"border: 1px solid black\">Sample Trasaction</td><td style=\"border: 1px solid black\">"+max+"</td><td style=\"border: 1px solid black\">"+avg+"</td></tr></table>";
+	return s;
+}
+@Path("/table")
+@GET
+@Produces(MediaType.TEXT_HTML)
+public String display() throws SQLException {
+	String s=getDetails();
+	return s;
 	
-	public static void getDetails(Connection con) throws SQLException {
-		PreparedStatement preparedStatement=con.prepareStatement("SELECT * FROM CPU");
-		ResultSet result=preparedStatement.executeQuery();
-		while(result.next()) {
-			String sequence=result.getString(1)+"s";
-			String cputime=result.getString(2);
-			
-			jsonObject2.put(sequence,cputime);
-		}
-		jsonObject1.put("values",jsonObject2);
-		PreparedStatement preparedStatement2=con.prepareStatement("SELECT max(CPU_Value),avg(CPU_Value) FROM CPU");
-		ResultSet result1=preparedStatement2.executeQuery();
-		while(result1.next()) {
-			float max=result1.getFloat(1);
-			float avg=result1.getFloat(2);
-			
-			jsonObject1.put("max_cpu_value",max);
-			jsonObject1.put("avg_cpu_value",avg);
-			
-		}
-		jsonObject3.put("sampletransaction",jsonObject1);
-		array.add(jsonObject3);
-		
-	}
-
-    
-
-	public static void main(String[] args) throws SQLException {
-		Connection con=getConnection();
-
-		 Statement s= con.createStatement();
-							      
-							      String sql = "CREATE TABLE CPU " +
-							                   "(sequence VARCHAR(50) not NULL, " +
-							                   " CPU_Value  FLOAT)";
-							      s.executeUpdate(sql);
-		try {
-			String line;
-			br = new BufferedReader(new FileReader("C:\\Users\\USER\\eclipse-workspce\\reka\\hackathon_project\\src\\hackathon_project\\sample.txt"));
-			while ((line = br.readLine()) != null) {
-			
-
-				StringTokenizer stringTokenizer = new StringTokenizer(line, " ");
-
-				while (stringTokenizer.hasMoreElements()) {
-
-					int x=0;
-					while(x<8) {
-						stringTokenizer.nextElement().toString();
-						x++;
-					}
-					
-//					required line
-					Double reqCPU = Double.parseDouble(stringTokenizer.nextElement().toString());
-					while(x<11) {
-						stringTokenizer.nextElement().toString();
-						x++;
-					}
-					 s.executeUpdate("insert into CPU (sequence,CPU_VALUE) values ("+count+","+reqCPU+")");
-					count++;
-					
-				}
-			}
-			getDetails(con);
-			
-			System.out.println(array);
-			
-		
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				if (br != null)
-					br.close();
-
-			} catch (IOException ex) {
-				ex.printStackTrace();
-			}
-		}
-	}
-
+	
+}
 }
